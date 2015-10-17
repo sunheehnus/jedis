@@ -1,12 +1,16 @@
 package redis.clients.jedis;
 
 import java.io.Closeable;
+import java.io.File;
 import java.io.IOException;
 import java.net.InetSocketAddress;
 import java.net.Socket;
 import java.net.SocketException;
 import java.util.ArrayList;
 import java.util.List;
+
+import org.newsclub.net.unix.AFUNIXSocket;
+import org.newsclub.net.unix.AFUNIXSocketAddress;
 
 import redis.clients.jedis.commands.ProtocolCommand;
 import redis.clients.jedis.exceptions.JedisConnectionException;
@@ -141,20 +145,26 @@ public class Connection implements Closeable {
   public void connect() {
     if (!isConnected()) {
       try {
-        socket = new Socket();
-        // ->@wjw_add
-        socket.setReuseAddress(true);
-        socket.setKeepAlive(true); // Will monitor the TCP connection is
-        // valid
-        socket.setTcpNoDelay(true); // Socket buffer Whetherclosed, to
-        // ensure timely delivery of data
-        socket.setSoLinger(true, 0); // Control calls close () method,
-        // the underlying socket is closed
-        // immediately
-        // <-@wjw_add
+        File udsFile = new File(host);
+        if (udsFile.exists()) {
+          socket = AFUNIXSocket.newInstance();
+          socket.connect(new AFUNIXSocketAddress(udsFile));
+        } else {
+          socket = new Socket();
+          // ->@wjw_add
+          socket.setReuseAddress(true);
+          socket.setKeepAlive(true); // Will monitor the TCP connection is
+          // valid
+          socket.setTcpNoDelay(true); // Socket buffer Whetherclosed, to
+          // ensure timely delivery of data
+          socket.setSoLinger(true, 0); // Control calls close () method,
+          // the underlying socket is closed
+          // immediately
+          // <-@wjw_add
 
-        socket.connect(new InetSocketAddress(host, port), connectionTimeout);
-        socket.setSoTimeout(soTimeout);
+          socket.connect(new InetSocketAddress(host, port), connectionTimeout);
+          socket.setSoTimeout(soTimeout);
+        }
         outputStream = new RedisOutputStream(socket.getOutputStream());
         inputStream = new RedisInputStream(socket.getInputStream());
       } catch (IOException ex) {
