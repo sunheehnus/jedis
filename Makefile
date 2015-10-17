@@ -201,6 +201,40 @@ cluster-enabled yes
 cluster-config-file /tmp/redis_cluster_node6.conf
 endef
 
+# UDS REDIS NODES
+define REDIS_UDS1
+daemonize yes
+port 0
+pidfile /tmp/redis_uds1.pid
+logfile /tmp/redis_uds1.log
+unixsocket /tmp/redis_6379.sock
+unixsocketperm 777
+save ""
+appendonly no
+endef
+
+define REDIS_UDS2
+daemonize yes
+port 0
+pidfile /tmp/redis_uds2.pid
+logfile /tmp/redis_uds2.log
+unixsocket /tmp/redis_6380.sock
+unixsocketperm 777
+save ""
+appendonly no
+endef
+
+define REDIS_UDS3
+daemonize yes
+port 0
+pidfile /tmp/redis_uds3.pid
+logfile /tmp/redis_uds3.log
+unixsocket /tmp/redis_6381.sock
+unixsocketperm 777
+save ""
+appendonly no
+endef
+
 export REDIS1_CONF
 export REDIS2_CONF
 export REDIS3_CONF
@@ -218,6 +252,9 @@ export REDIS_CLUSTER_NODE3_CONF
 export REDIS_CLUSTER_NODE4_CONF
 export REDIS_CLUSTER_NODE5_CONF
 export REDIS_CLUSTER_NODE6_CONF
+export REDIS_UDS1
+export REDIS_UDS2
+export REDIS_UDS3
 
 start: cleanup
 	echo "$$REDIS1_CONF" | redis-server -
@@ -240,6 +277,9 @@ start: cleanup
 	echo "$$REDIS_CLUSTER_NODE4_CONF" | redis-server -
 	echo "$$REDIS_CLUSTER_NODE5_CONF" | redis-server -
 	echo "$$REDIS_CLUSTER_NODE6_CONF" | redis-server -
+	echo "$$REDIS_UDS1" | redis-server -
+	echo "$$REDIS_UDS2" | redis-server -
+	echo "$$REDIS_UDS3" | redis-server -
 
 cleanup:
 	- rm -vf /tmp/redis_cluster_node*.conf 2>/dev/null
@@ -263,6 +303,9 @@ stop:
 	kill `cat /tmp/redis_cluster_node4.pid` || true
 	kill `cat /tmp/redis_cluster_node5.pid` || true
 	kill `cat /tmp/redis_cluster_node6.pid` || true
+	kill `cat /tmp/redis_uds1.pid`
+	kill `cat /tmp/redis_uds2.pid`
+	kill `cat /tmp/redis_uds3.pid`
 	rm -f /tmp/sentinel1.conf
 	rm -f /tmp/sentinel2.conf
 	rm -f /tmp/sentinel3.conf
